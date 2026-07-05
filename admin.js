@@ -86,7 +86,7 @@ async function handleLogin(event) {
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
   if (error) {
-    message.textContent = "登入失敗，請確認 Email 或密碼。";
+    message.textContent = `登入失敗：${error.message}`;
     return;
   }
 
@@ -369,6 +369,9 @@ function renderProducts() {
       product.category,
       product.package_qty,
       product.unit,
+      product.box_spec,
+      product.box_price,
+      product.reward_rate,
       product.description,
       Array.isArray(product.tags) ? product.tags.join(" ") : "",
     ].join(" ").toLowerCase();
@@ -413,8 +416,22 @@ function renderProductCard(product) {
     : `<span class="badge red">已隱藏</span>`
   );
 
-  if (product.is_featured) badges.push(`<span class="badge blue">熱門</span>`);
-  if (Number(product.reward_rate) > 0) badges.push(`<span class="badge">回饋 ${Number(product.reward_rate)}%</span>`);
+  if (product.is_featured) {
+    badges.push(`<span class="badge blue">熱門</span>`);
+  }
+
+  if (product.box_enabled && Number(product.box_price || 0) > 0) {
+    badges.push(`<span class="badge blue">箱購 ${money(product.box_price)}</span>`);
+  }
+
+  if (Number(product.reward_rate || 0) > 0) {
+    badges.push(`<span class="badge">回饋 ${Number(product.reward_rate)}%</span>`);
+  }
+
+  const singleSpec = `${escapeHtml(product.package_qty || "-")} ${escapeHtml(product.unit || "")}`.trim();
+  const boxText = product.box_enabled && Number(product.box_price || 0) > 0
+    ? `單箱：${escapeHtml(product.box_spec || "-")} / ${money(product.box_price)}<br>`
+    : "";
 
   return `
     <article class="product-card">
@@ -429,7 +446,8 @@ function renderProductCard(product) {
         <div class="product-info">
           分類：${escapeHtml(product.category || "-")}<br>
           供應商：${escapeHtml(product.brand_supplier || "-")}<br>
-          規格：${escapeHtml(product.package_qty || "-")} ${escapeHtml(product.unit || "")}<br>
+          單包：${singleSpec} / ${money(product.price)}<br>
+          ${boxText}
           庫存：${Number(product.stock || 0)}
         </div>
 
@@ -465,6 +483,8 @@ function openProductModal(product = null) {
   $("#productUnit").value = product?.unit || "";
   $("#productPrice").value = product?.price ?? "";
   $("#productCost").value = product?.cost ?? "";
+  $("#productBoxSpec").value = product?.box_spec || "";
+  $("#productBoxPrice").value = product?.box_price ?? 0;
   $("#productStock").value = product?.stock ?? 0;
   $("#productMinStock").value = product?.min_stock ?? 0;
   $("#productRewardRate").value = product?.reward_rate ?? 0;
@@ -472,6 +492,7 @@ function openProductModal(product = null) {
   $("#productTags").value = Array.isArray(product?.tags) ? product.tags.join(",") : "";
   $("#productDescription").value = product?.description || "";
   $("#productFeatured").checked = Boolean(product?.is_featured);
+  $("#productBoxEnabled").checked = Boolean(product?.box_enabled);
   $("#productVisible").checked = product ? Boolean(product.is_visible) : true;
   $("#productImage").value = "";
 
@@ -517,6 +538,9 @@ async function handleProductSave(event) {
     unit: nullIfEmpty($("#productUnit").value),
     price: toNumber($("#productPrice").value),
     cost: toNumber($("#productCost").value),
+    box_spec: nullIfEmpty($("#productBoxSpec").value),
+    box_price: toNumber($("#productBoxPrice").value),
+    box_enabled: $("#productBoxEnabled").checked,
     stock: toInteger($("#productStock").value),
     min_stock: toInteger($("#productMinStock").value),
     reward_rate: toNumber($("#productRewardRate").value),
@@ -530,6 +554,16 @@ async function handleProductSave(event) {
 
   if (!payload.name) {
     toast("請輸入商品名稱");
+    return;
+  }
+
+  if (payload.price <= 0) {
+    toast("請輸入單包價");
+    return;
+  }
+
+  if (payload.box_enabled && payload.box_price <= 0) {
+    toast("已勾選開放箱購顯示，請輸入單箱價");
     return;
   }
 
@@ -720,8 +754,12 @@ function renderOrders() {
 
 function renderOrderCard(order) {
   const items = state.orderItemsByOrder[order.id] || [];
+
   const itemText = items.length
-    ? items.map((item) => `${escapeHtml(item.product_name)} × ${item.quantity}`).join("、")
+    ? items.map((item) => {
+      const typeLabel = item.purchase_type === "box" ? "箱購" : "單包";
+      return `${escapeHtml(item.product_name)}（${typeLabel}）× ${item.quantity}`;
+    }).join("、")
     : "尚無品項明細";
 
   const statusClass = order.order_status === "已完成"
