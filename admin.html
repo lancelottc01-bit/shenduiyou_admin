@@ -83,7 +83,7 @@
       <div class="panel-head">
         <div>
           <h2>商品管理</h2>
-          <p>管理商品、分類、價格、庫存、圖片與前台顯示。</p>
+          <p>管理商品、單包價、單箱價、回饋比例、庫存、圖片與前台顯示。</p>
         </div>
 
         <button id="addProductBtn" class="primary-btn" type="button">新增商品</button>
@@ -165,23 +165,33 @@
         </label>
 
         <label>
-          規格
+          單包規格
           <input id="productPackageQty" type="text" placeholder="例如 50入、100入、200尺" />
         </label>
 
         <label>
-          單位
-          <input id="productUnit" type="text" placeholder="條、箱、捲、包" />
+          單包單位
+          <input id="productUnit" type="text" placeholder="條、包、捲、個" />
         </label>
 
         <label>
-          售價 *
+          單包價 *
           <input id="productPrice" type="number" min="0" step="1" required />
         </label>
 
         <label>
           成本
           <input id="productCost" type="number" min="0" step="0.1" />
+        </label>
+
+        <label>
+          單箱規格
+          <input id="productBoxSpec" type="text" placeholder="例如 20包/箱、24條/箱、12捲/箱" />
+        </label>
+
+        <label>
+          單箱價
+          <input id="productBoxPrice" type="number" min="0" step="1" placeholder="例如 1500" />
         </label>
 
         <label>
@@ -196,7 +206,7 @@
 
         <label>
           回饋 %
-          <input id="productRewardRate" type="number" min="0" step="0.1" value="0" />
+          <input id="productRewardRate" type="number" min="0" step="0.1" value="0" placeholder="不填或 0 則前台不顯示" />
         </label>
 
         <label>
@@ -227,6 +237,11 @@
         <label class="check-line">
           <input id="productFeatured" type="checkbox" />
           首頁熱門
+        </label>
+
+        <label class="check-line">
+          <input id="productBoxEnabled" type="checkbox" />
+          開放箱購顯示
         </label>
 
         <label class="check-line">
