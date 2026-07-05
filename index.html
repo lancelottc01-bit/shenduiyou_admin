@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>神隊友｜餐飲耗材補貨平台</title>
+  <meta name="description" content="神隊友餐飲耗材補貨平台後台系統" />
+
+  <style>
+    :root {
+      --bg: #f7efe6;
+      --card: #fffaf3;
+      --text: #2a2118;
+      --muted: #75675c;
+      --line: #eadccc;
+      --main: #c66b34;
+      --main-dark: #9f4f21;
+      --black: #241a13;
+      --shadow: 0 18px 50px rgba(78, 48, 24, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: radial-gradient(circle at top, #fff2df 0, var(--bg) 45%, #f1e1d0 100%);
+      color: var(--text);
+    }
+
+    .home-card {
+      width: min(460px, 100%);
+      background: rgba(255, 250, 243, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      padding: 34px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--black);
+      color: #fff;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 22px 0 8px;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    a {
+      display: block;
+      text-decoration: none;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-weight: 950;
+    }
+
+    .primary {
+      background: var(--main);
+      color: #fff;
+    }
+
+    .primary:hover {
+      background: var(--main-dark);
+    }
+
+    .secondary {
+      background: #efe0d0;
+      color: var(--text);
+    }
+
+    .note {
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="home-card">
+    <div class="brand-pill">神隊友</div>
+
+    <h1>餐飲耗材補貨平台</h1>
+    <p>
+      後台管理系統<br />
+      商品、攤商編號與補貨訂單管理
+    </p>
+
+    <div class="actions">
+      <a class="primary" href="admin.html">進入後台</a>
+      <a class="secondary" href="admin.html">管理員登入</a>
+    </div>
+
+    <p class="note">
+      Supabase 僅保存攤商編號、商品與訂單資料；完整店家資料請放公司自有主機。
+    </p>
+  </main>
+</body>
+</html>
