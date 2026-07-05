@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>神隊友後台｜餐飲耗材補貨平台</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+
+<body>
+  <main id="loginPage" class="login-page">
+    <section class="login-card">
+      <div class="brand-pill">神隊友</div>
+      <h1>後台登入</h1>
+      <p>管理商品、攤商編號與補貨訂單。</p>
+
+      <form id="loginForm" class="form-stack">
+        <label>
+          管理員 Email
+          <input id="loginEmail" type="email" autocomplete="email" required />
+        </label>
+
+        <label>
+          密碼
+          <input id="loginPassword" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button class="primary-btn" type="submit">登入後台</button>
+      </form>
+
+      <p id="loginMessage" class="message"></p>
+    </section>
+  </main>
+
+  <main id="adminPage" class="admin-page hidden">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">餐飲耗材補貨平台</p>
+        <h1>神隊友後台</h1>
+        <p id="adminInfo" class="muted"></p>
+      </div>
+
+      <button id="logoutBtn" class="ghost-btn" type="button">登出</button>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab-btn active" type="button" data-tab="orders">訂單管理</button>
+      <button class="tab-btn" type="button" data-tab="vendors">攤商帳號</button>
+      <button class="tab-btn" type="button" data-tab="products">商品管理</button>
+    </nav>
+
+    <section class="toolbar">
+      <input id="globalSearch" type="search" placeholder="搜尋攤商編號、商品、訂單..." />
+      <button id="refreshBtn" class="secondary-btn" type="button">重新整理</button>
+    </section>
+
+    <section id="ordersPanel" class="panel active">
+      <div class="panel-head">
+        <div>
+          <h2>訂單管理</h2>
+          <p>只顯示攤商編號，不顯示完整店家資料。</p>
+        </div>
+      </div>
+
+      <div id="orderStats" class="stats-grid"></div>
+      <div id="ordersBody" class="card-list"></div>
+    </section>
+
+    <section id="vendorsPanel" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>攤商帳號</h2>
+          <p>新增攤商編號與電話密碼。完整店家資料請放公司自己的主機。</p>
+        </div>
+
+        <button id="addVendorBtn" class="primary-btn" type="button">新增攤商帳號</button>
+      </div>
+
+      <div id="vendorsBody" class="table-wrap"></div>
+    </section>
+
+    <section id="productsPanel" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>商品管理</h2>
+          <p>管理商品、分類、價格、庫存、圖片與前台顯示。</p>
+        </div>
+
+        <button id="addProductBtn" class="primary-btn" type="button">新增商品</button>
+      </div>
+
+      <div id="productsBody" class="product-grid"></div>
+    </section>
+  </main>
+
+  <div id="vendorModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>新增攤商帳號</h2>
+        <button class="icon-btn" type="button" data-close-modal="vendorModal">×</button>
+      </div>
+
+      <form id="vendorForm" class="form-grid">
+        <label>
+          攤商編號 *
+          <input id="vendorCode" type="text" placeholder="例如 A001" required />
+        </label>
+
+        <label>
+          電話密碼 *
+          <input id="vendorPassword" type="text" inputmode="numeric" placeholder="例如 0912345678" required />
+        </label>
+
+        <label>
+          價格等級
+          <select id="vendorPriceLevel">
+            <option value="一般">一般</option>
+            <option value="批發">批發</option>
+            <option value="VIP">VIP</option>
+          </select>
+        </label>
+
+        <div class="notice full">
+          系統只會把電話後三碼存進 vendor_accounts。完整電話、店名、地址請放公司自己的主機。
+        </div>
+
+        <div id="vendorCreateResult" class="result-box full hidden"></div>
+
+        <div class="form-actions full">
+          <button class="secondary-btn" type="button" data-close-modal="vendorModal">取消</button>
+          <button class="primary-btn" type="submit">建立帳號</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal hidden">
+    <div class="modal-card large">
+      <div class="modal-head">
+        <h2 id="productModalTitle">新增商品</h2>
+        <button class="icon-btn" type="button" data-close-modal="productModal">×</button>
+      </div>
+
+      <form id="productForm" class="form-grid">
+        <input id="productId" type="hidden" />
+
+        <label>
+          商品名稱 *
+          <input id="productName" type="text" required />
+        </label>
+
+        <label>
+          SKU / 條碼
+          <input id="productSku" type="text" />
+        </label>
+
+        <label>
+          品牌 / 供應商
+          <input id="productBrandSupplier" type="text" placeholder="例如 公版、坤益、藍寶" />
+        </label>
+
+        <label>
+          分類
+          <input id="productCategory" type="text" placeholder="例如 飲料杯、餐盒、保鮮膜" />
+        </label>
+
+        <label>
+          規格
+          <input id="productPackageQty" type="text" placeholder="例如 50入、100入、200尺" />
+        </label>
+
+        <label>
+          單位
+          <input id="productUnit" type="text" placeholder="條、箱、捲、包" />
+        </label>
+
+        <label>
+          售價 *
+          <input id="productPrice" type="number" min="0" step="1" required />
+        </label>
+
+        <label>
+          成本
+          <input id="productCost" type="number" min="0" step="0.1" />
+        </label>
+
+        <label>
+          庫存
+          <input id="productStock" type="number" min="0" step="1" value="0" />
+        </label>
+
+        <label>
+          安全庫存
+          <input id="productMinStock" type="number" min="0" step="1" value="0" />
+        </label>
+
+        <label>
+          回饋 %
+          <input id="productRewardRate" type="number" min="0" step="0.1" value="0" />
+        </label>
+
+        <label>
+          排序
+          <input id="productSort" type="number" min="0" step="1" value="999" />
+        </label>
+
+        <label class="full">
+          商品圖片
+          <input id="productImage" type="file" accept="image/png,image/jpeg,image/webp,image/*" />
+          <small>只放商品圖，不放攤商資料。建議 1:1 正方形。</small>
+        </label>
+
+        <div class="full">
+          <img id="productImagePreview" class="image-preview hidden" alt="商品圖片預覽" />
+        </div>
+
+        <label class="full">
+          商品標籤
+          <input id="productTags" type="text" placeholder="例如 熱門,台灣製造,杯蓋" />
+        </label>
+
+        <label class="full">
+          商品說明
+          <textarea id="productDescription" rows="4"></textarea>
+        </label>
+
+        <label class="check-line">
+          <input id="productFeatured" type="checkbox" />
+          首頁熱門
+        </label>
+
+        <label class="check-line">
+          <input id="productVisible" type="checkbox" checked />
+          前台顯示
+        </label>
+
+        <div class="form-actions full">
+          <button class="secondary-btn" type="button" data-close-modal="productModal">取消</button>
+          <button class="primary-btn" type="submit">儲存商品</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
