@@ -371,6 +371,8 @@ function renderProducts() {
       product.unit,
       product.box_spec,
       product.box_price,
+      product.single_reward_rate,
+      product.box_reward_rate,
       product.reward_rate,
       product.description,
       Array.isArray(product.tags) ? product.tags.join(" ") : "",
@@ -410,6 +412,9 @@ function renderProducts() {
 
 function renderProductCard(product) {
   const badges = [];
+  const singleRewardRate = getSingleRewardRate(product);
+  const boxRewardRate = getBoxRewardRate(product);
+  const hasBox = product.box_enabled && Number(product.box_price || 0) > 0;
 
   badges.push(product.is_visible
     ? `<span class="badge green">前台顯示</span>`
@@ -420,17 +425,21 @@ function renderProductCard(product) {
     badges.push(`<span class="badge blue">熱門</span>`);
   }
 
-  if (product.box_enabled && Number(product.box_price || 0) > 0) {
+  if (hasBox) {
     badges.push(`<span class="badge blue">箱購 ${money(product.box_price)}</span>`);
   }
 
-  if (Number(product.reward_rate || 0) > 0) {
-    badges.push(`<span class="badge">回饋 ${Number(product.reward_rate)}%</span>`);
+  if (singleRewardRate > 0) {
+    badges.push(`<span class="badge">單包回饋 ${singleRewardRate}%</span>`);
+  }
+
+  if (boxRewardRate > 0) {
+    badges.push(`<span class="badge green">箱購回饋 ${boxRewardRate}%</span>`);
   }
 
   const singleSpec = `${escapeHtml(product.package_qty || "-")} ${escapeHtml(product.unit || "")}`.trim();
-  const boxText = product.box_enabled && Number(product.box_price || 0) > 0
-    ? `單箱：${escapeHtml(product.box_spec || "-")} / ${money(product.box_price)}<br>`
+  const boxText = hasBox
+    ? `單箱：${escapeHtml(product.box_spec || "-")} / ${money(product.box_price)}${boxRewardRate > 0 ? ` / 回饋 ${boxRewardRate}%` : ""}<br>`
     : "";
 
   return `
@@ -446,7 +455,7 @@ function renderProductCard(product) {
         <div class="product-info">
           分類：${escapeHtml(product.category || "-")}<br>
           供應商：${escapeHtml(product.brand_supplier || "-")}<br>
-          單包：${singleSpec} / ${money(product.price)}<br>
+          單包：${singleSpec} / ${money(product.price)}${singleRewardRate > 0 ? ` / 回饋 ${singleRewardRate}%` : ""}<br>
           ${boxText}
           庫存：${Number(product.stock || 0)}
         </div>
@@ -487,9 +496,12 @@ function openProductModal(product = null) {
   $("#productBoxPrice").value = product?.box_price ?? 0;
   $("#productStock").value = product?.stock ?? 0;
   $("#productMinStock").value = product?.min_stock ?? 0;
+
   const legacyRewardRate = Number(product?.reward_rate || 0);
-  $("#productSingleRewardRate").value = product?.single_reward_rate ?? legacyRewardRate;
-  $("#productBoxRewardRate").value = product?.box_reward_rate ?? legacyRewardRate;
+  setOptionalValue("#productSingleRewardRate", product?.single_reward_rate ?? legacyRewardRate);
+  setOptionalValue("#productBoxRewardRate", product?.box_reward_rate ?? legacyRewardRate);
+  setOptionalValue("#productRewardRate", product?.reward_rate ?? legacyRewardRate);
+
   $("#productSort").value = product?.sort_order ?? 999;
   $("#productTags").value = Array.isArray(product?.tags) ? product.tags.join(",") : "";
   $("#productDescription").value = product?.description || "";
@@ -531,6 +543,10 @@ async function handleProductSave(event) {
   const id = $("#productId").value;
   const file = $("#productImage").files[0];
 
+  const singleRewardRate = toNumber(getOptionalValue("#productSingleRewardRate", "#productRewardRate"));
+  const boxRewardRate = toNumber(getOptionalValue("#productBoxRewardRate", "#productRewardRate"));
+  const legacyRewardRate = Math.max(singleRewardRate, boxRewardRate);
+
   const payload = {
     name: $("#productName").value.trim(),
     sku: nullIfEmpty($("#productSku").value),
@@ -545,7 +561,9 @@ async function handleProductSave(event) {
     box_enabled: $("#productBoxEnabled").checked,
     stock: toInteger($("#productStock").value),
     min_stock: toInteger($("#productMinStock").value),
-    reward_rate: toNumber($("#productRewardRate").value),
+    single_reward_rate: singleRewardRate,
+    box_reward_rate: boxRewardRate,
+    reward_rate: legacyRewardRate,
     sort_order: toInteger($("#productSort").value) || 999,
     tags: parseTags($("#productTags").value),
     description: nullIfEmpty($("#productDescription").value),
@@ -566,6 +584,11 @@ async function handleProductSave(event) {
 
   if (payload.box_enabled && payload.box_price <= 0) {
     toast("已勾選開放箱購顯示，請輸入單箱價");
+    return;
+  }
+
+  if (payload.box_enabled && !payload.box_spec) {
+    toast("已勾選開放箱購顯示，請輸入單箱規格");
     return;
   }
 
@@ -760,9 +783,16 @@ function renderOrderCard(order) {
   const itemText = items.length
     ? items.map((item) => {
       const typeLabel = item.purchase_type === "box" ? "箱購" : "單包";
-      return `${escapeHtml(item.product_name)}（${typeLabel}）× ${item.quantity}`;
+      const rewardRate = Number(item.reward_rate_snapshot || 0);
+      const rewardText = rewardRate > 0 ? `，回饋 ${rewardRate}%` : "";
+
+      return `${escapeHtml(item.product_name)}（${typeLabel}）× ${item.quantity}${rewardText}`;
     }).join("、")
     : "尚無品項明細";
+
+  const rewardTotal = items.reduce((sum, item) => {
+    return sum + Number(item.reward_amount_snapshot || 0);
+  }, 0);
 
   const statusClass = order.order_status === "已完成"
     ? "done"
@@ -787,6 +817,7 @@ function renderOrderCard(order) {
 
       <div class="badges">
         <span class="status-pill ${statusClass}">${escapeHtml(order.order_status || "待確認")}</span>
+        ${rewardTotal > 0 ? `<span class="badge green">預估回饋 ${money(rewardTotal)}</span>` : ""}
       </div>
 
       <div class="order-items">${itemText}</div>
@@ -853,6 +884,31 @@ async function updateOrderStatus(orderId, status) {
 /* =========================
    共用工具
 ========================= */
+
+function getSingleRewardRate(product) {
+  return Number(product?.single_reward_rate ?? product?.reward_rate ?? 0);
+}
+
+function getBoxRewardRate(product) {
+  return Number(product?.box_reward_rate ?? product?.reward_rate ?? 0);
+}
+
+function setOptionalValue(selector, value) {
+  const el = $(selector);
+  if (el) el.value = value;
+}
+
+function getOptionalValue(primarySelector, fallbackSelector = null) {
+  const primary = $(primarySelector);
+  if (primary) return primary.value;
+
+  if (fallbackSelector) {
+    const fallback = $(fallbackSelector);
+    if (fallback) return fallback.value;
+  }
+
+  return 0;
+}
 
 function openModal(id) {
   $(`#${id}`).classList.remove("hidden");
